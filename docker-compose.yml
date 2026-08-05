@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: clinica_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: senha123
+      POSTGRES_DB: clinica_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build: ./clinica-backend
+    container_name: clinica_backend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:senha123@postgres:5432/clinica_db?schema=public
+    depends_on:
+      - postgres
+
+  frontend:
+    build: ./clinica-frontend
+    container_name: clinica_frontend
+    restart: always
+    ports:
+      - "3001:3000"
+    environment:
+      - PORT=3000
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
