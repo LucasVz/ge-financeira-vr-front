@@ -4,11 +4,11 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, Tags } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "react-query";
+import { ClipboardList, Plus, Trash2 } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "react-query";
 
-import { useFinance } from "@/lib/finance-store";
 import categoriesService from "@/services/categoriesService";
+import servicesService from "@/services/servicesService";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,14 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import {
+	Select,
+	SelectContent,
+	SelectGroup,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import {
 	Table,
 	TableBody,
@@ -37,81 +45,134 @@ import {
 	EmptyTitle,
 } from "@/components/ui/empty";
 
-export default function CategoriesPage() {
-	const { servicos: services } = useFinance();
-	const [name, setName] = useState("");
-
+export default function ServicesPage() {
 	const queryClient = useQueryClient();
+	const [name, setName] = useState("");
+	const [categoryId, setCategoryId] = useState("");
 
-	const { data: categories = [], isLoading } = useQuery(
+	const { data: categories = [], isLoading: isLoadingCategories } = useQuery(
 		["categories"],
 		categoriesService.getCategories,
 		{ refetchOnWindowFocus: false },
 	);
 
-	const createMutation = useMutation(categoriesService.postCategory, {
+	const { data: services = [], isLoading: isLoadingServices } = useQuery(
+		["services"],
+		servicesService.getServices,
+		{ refetchOnWindowFocus: false },
+	);
+
+	const createMutation = useMutation(servicesService.postService, {
 		onSuccess: () => {
-			toast.success("Categoria cadastrada com sucesso!");
+			toast.success("Serviço cadastrado com sucesso!");
 			setName("");
-			queryClient.invalidateQueries("categories");
+			setCategoryId("");
+			queryClient.invalidateQueries("services");
 		},
 		onError: () => {
-			toast.error("Erro ao cadastrar a categoria.");
+			toast.error("Erro ao cadastrar o serviço.");
 		},
 	});
 
-	const deleteMutation = useMutation(categoriesService.deleteCategory, {
+	const deleteMutation = useMutation(servicesService.deleteService, {
 		onSuccess: () => {
-			toast.success("Categoria removida.");
-			queryClient.invalidateQueries("categories");
+			toast.success("Serviço removido.");
+			queryClient.invalidateQueries("services");
 		},
 		onError: () => {
-			toast.error("Erro ao remover a categoria.");
+			toast.error("Erro ao remover o serviço.");
 		},
 	});
 
-	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault();
-		if (!name.trim()) {
-			toast.error("Informe o nome da categoria.");
+	const handleSubmit = (event: React.FormEvent) => {
+		event.preventDefault();
+
+		if (!name.trim() || !categoryId) {
+			toast.error("Informe o nome e a categoria do serviço.");
 			return;
 		}
 
-		createMutation.mutate({ name: name.trim() });
+		createMutation.mutate({
+			name: name.trim(),
+			categoryId: Number(categoryId),
+		});
 	};
 
-	const countServices = (categoryId: number) =>
-		services.filter((s: any) => s.categoriaId === categoryId).length;
+	const categoryItems = categories.map((category: any) => ({
+		value: String(category.id),
+		label: category.name,
+	}));
+
+	const getCategoryName = (service: any) =>
+		service.category?.name ??
+		categories.find((category: any) => category.id === service.categoryId)
+			?.name ??
+		"—";
+
+	const isFormLoading = isLoadingCategories || createMutation.isLoading;
 
 	return (
 		<div className="mx-auto max-w-4xl">
 			<PageHeader
-				title="Categorias"
-				description="Organize seus serviços por categoria"
+				title="Serviços"
+				description="Cadastre os serviços oferecidos pela clínica"
 			/>
 
 			<Card>
 				<CardHeader>
-					<CardTitle>Nova Categoria</CardTitle>
-					<CardDescription>Cadastre uma categoria de serviço</CardDescription>
+					<CardTitle>Novo Serviço</CardTitle>
+					<CardDescription>
+						Informe o nome do serviço e a categoria correspondente
+					</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<form onSubmit={handleSubmit}>
 						<FieldGroup>
-							<div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-								<Field className="flex-1">
-									<FieldLabel htmlFor="nome-categoria">
-										Nome da Categoria
-									</FieldLabel>
+							<div className="grid gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+								<Field>
+									<FieldLabel htmlFor="nome-servico">Nome do Serviço</FieldLabel>
 									<Input
-										id="nome-categoria"
-										placeholder="Ex: Estética Facial"
+										id="nome-servico"
+										placeholder="Ex: Limpeza de pele"
 										value={name}
-										onChange={(e) => setName(e.target.value)}
+										onChange={(event) => setName(event.target.value)}
 										disabled={createMutation.isLoading}
 									/>
 								</Field>
-								<Button type="submit" disabled={createMutation.isLoading}>
+
+								<Field>
+									<FieldLabel htmlFor="categoria-servico">Categoria</FieldLabel>
+									<Select
+										items={categoryItems}
+										value={categoryId}
+										onValueChange={(value) => setCategoryId(value || "")}
+										disabled={isFormLoading || categories.length === 0}
+									>
+										<SelectTrigger id="categoria-servico" className="w-full">
+											<SelectValue
+												placeholder={
+													categories.length === 0
+														? "Cadastre uma categoria primeiro"
+														: "Selecione a categoria"
+												}
+											/>
+										</SelectTrigger>
+										<SelectContent>
+											<SelectGroup>
+												{categories.map((category: any) => (
+													<SelectItem key={category.id} value={String(category.id)}>
+														{category.name}
+													</SelectItem>
+												))}
+											</SelectGroup>
+										</SelectContent>
+									</Select>
+								</Field>
+
+								<Button
+									type="submit"
+									disabled={isFormLoading || categories.length === 0}
+								>
 									<Plus data-icon="inline-start" />
 									{createMutation.isLoading ? "Cadastrando..." : "Cadastrar"}
 								</Button>
@@ -123,25 +184,23 @@ export default function CategoriesPage() {
 
 			<Card className="mt-6">
 				<CardHeader>
-					<CardTitle>Categorias cadastradas</CardTitle>
+					<CardTitle>Serviços cadastrados</CardTitle>
 					<CardDescription>
-						{isLoading ? "Carregando..." : `${categories.length} categoria(s)`}
+						{isLoadingServices ? "Carregando..." : `${services.length} serviço(s)`}
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
-					{isLoading ? (
-						<div className="flex justify-center p-4">
-							Carregando categorias...
-						</div>
-					) : categories.length === 0 ? (
+					{isLoadingServices ? (
+						<div className="flex justify-center p-4">Carregando serviços...</div>
+					) : services.length === 0 ? (
 						<Empty>
 							<EmptyHeader>
 								<EmptyMedia variant="icon">
-									<Tags />
+									<ClipboardList />
 								</EmptyMedia>
-								<EmptyTitle>Nenhuma categoria</EmptyTitle>
+								<EmptyTitle>Nenhum serviço</EmptyTitle>
 								<EmptyDescription>
-									Cadastre a primeira categoria acima.
+									Cadastre o primeiro serviço acima.
 								</EmptyDescription>
 							</EmptyHeader>
 						</Empty>
@@ -149,24 +208,24 @@ export default function CategoriesPage() {
 						<Table>
 							<TableHeader>
 								<TableRow>
+									<TableHead>Serviço</TableHead>
 									<TableHead>Categoria</TableHead>
-									<TableHead className="text-right">Serviços</TableHead>
 									<TableHead className="w-10" />
 								</TableRow>
 							</TableHeader>
 							<TableBody>
-								{categories.map((c: any) => (
-									<TableRow key={c.id}>
-										<TableCell className="font-medium">{c.name}</TableCell>
-										<TableCell className="text-right">
-											<Badge variant="secondary">{countServices(c.id)}</Badge>
+								{services.map((service: any) => (
+									<TableRow key={service.id}>
+										<TableCell className="font-medium">{service.name}</TableCell>
+										<TableCell>
+											<Badge variant="secondary">{getCategoryName(service)}</Badge>
 										</TableCell>
 										<TableCell>
 											<Button
 												variant="ghost"
 												size="icon"
-												aria-label="Remover categoria"
-												onClick={() => deleteMutation.mutate(c.id)}
+												aria-label="Remover serviço"
+												onClick={() => deleteMutation.mutate(service.id)}
 												disabled={deleteMutation.isLoading}
 											>
 												<Trash2 />

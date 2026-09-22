@@ -27,13 +27,13 @@ import {
 } from "@/components/ui/sidebar"
 
 const navItems = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/servicos", label: "Register Services", icon: ClipboardList },
-  { href: "/formas-pagamento", label: "Payment Methods", icon: CreditCard },
-  { href: "/categorias", label: "Categories", icon: Tags },
-  { href: "/entradas", label: "Register Income", icon: TrendingUp },
-  { href: "/saidas", label: "Register Expense", icon: TrendingDown },
-  { href: "/relatorios", label: "Visual Reports", icon: BarChart3 },
+  { href: "/", label: "Painel", icon: LayoutDashboard },
+  { href: "/servicos", label: "Cadastrar Serviços", icon: ClipboardList },
+  { href: "/formas-pagamento", label: "Formas de Pagamento", icon: CreditCard },
+  { href: "/categorias", label: "Categorias", icon: Tags },
+  { href: "/entradas", label: "Registrar Entrada", icon: TrendingUp },
+  { href: "/saidas", label: "Registrar Saída", icon: TrendingDown },
+  { href: "/relatorios", label: "Relatórios Visuais", icon: BarChart3 },
 ]
 
 export function AppSidebar() {
@@ -48,9 +48,9 @@ export function AppSidebar() {
           </div>
           <div className="flex flex-col leading-tight">
             <span className="text-sm font-semibold text-sidebar-foreground">
-              Rebeca Vaz Clinic
+              Clínica Rebeca Vaz
             </span>
-            <span className="text-xs text-muted-foreground">Financial Management</span>
+            <span className="text-xs text-muted-foreground">Gestão Financeira</span>
           </div>
         </div>
       </SidebarHeader>
@@ -89,7 +89,7 @@ export function AppSidebar() {
           </div>
           <div className="flex flex-col leading-tight">
             <span className="text-sm font-medium text-sidebar-foreground">
-              Administrator
+              Administrador
             </span>
             <span className="text-xs text-muted-foreground">admin@clinica.com</span>
           </div>

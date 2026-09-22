@@ -184,8 +184,8 @@ export default function IncomesPage() {
 	return (
 		<div className="mx-auto max-w-5xl">
 			<PageHeader
-				title="Bem-vindo ao painel financeiro"
-				description="Acompanhe suas receitas e despesas em tempo real"
+				title="Registrar Entrada"
+				description="Registre e acompanhe as receitas da clínica"
 			/>
 
 			<Card>
